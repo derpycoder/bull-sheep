@@ -1,2 +1,2 @@
-# bull-sheep
-Making a game using PICO-8
+# Bull Sheep
+A Game About Sheeps
