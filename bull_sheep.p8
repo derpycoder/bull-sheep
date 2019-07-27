@@ -2,99 +2,123 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 -- main
-timex=0
-timey=0
-sample_rate=0.05
+local anim
+local sheeps
 
 function _init()
- init_sheep()
- init_sheph()
+ anim = {
+  last_updated = 0,
+  sample_rate = 0.05
+ }
+
+ sheeps = {
+  make_sheep(60, 40),
+  make_sheep(30, 20),
+  make_sheep(80, 60),
+ }
  
- chaos_sheep()
+ init_sheph()
 end
 
 function _update()
- cls()
- 
- move_sheep()
  move_sheph()
- 
- --anim
- timey=time()
- 
- if timey-timex>sample_rate then
-  timex=timey
-  
-  anim_sheep()
-  anim_sheph()
+
+ for sheep in all(sheeps) do
+  sheep:update()
  end
+
+ local curr_time = time()
  
- --btn
- if btnp(❎) then
-  chaos_sheep()
+ if curr_time - anim.last_updated > anim.sample_rate then
+  anim.last_updated = curr_time
+
+  anim_sheph()
+  
+  for sheep in all(sheeps) do
+   sheep:animate()
+  end
  end
 end
 
 function _draw()
+ cls()
  map(0,0)
  
- print('press ❎ for chaos',5,115,7) 
- 
- spr(sheep,sheepx,sheepy,1,1,sheepdx>0)
- 
+ print('press ❎ for chaos',5,115,7)
+
  spr(sheph,shephx,shephy)
+ 
+ for sheep in all(sheeps) do
+  sheep:draw()
+ end
+
 end
 
 -->8
 -- sheep
 
-sheep_r_s=1
-sheep_r_e=7
-
-function init_sheep()
- sheep=sheep_r_s
- 
- sheepx=40
- sheepy=60
+function make_sheep(x, y)
+ return {
+  bounds = {
+   x = x,
+   y = y,
+   r = 4,
+   w = 4,
+   h = 4
+  },
+  phys = {
+   dx = rnd(4) - 2,
+   dy = rnd(2) - 1,
+  },
+  sprites = {
+   curr = 1,
+   idle = {
+    start = 1,
+    stop = 7
+   }
+  },
+  update = function(self)
+   self.bounds.x += self.phys.dx
+   self.bounds.y += self.phys.dy
+   
+   self:bounce()
+   
+   if btnp(❎) then
+    chaos_sheep()
+   end
+  end,
+  draw = function(self)
+   spr(self.sprites.curr,
+       self.bounds.x, self.bounds.y, 1, 1,
+       self.phys.dx > 0)
+  end,
+  animate = function(self)
+   self.sprites.curr += 1
+   
+   if self.sprites.curr > self.sprites.idle.stop then
+    self.sprites.curr = self.sprites.idle.start
+   end
+  end,
+  debug = function(self)
+  end,
+  bounce = function(self)
+   -- left or right
+   if self.bounds.x <= 3 or self.bounds.x >= 125 then
+    self.phys.dx =- self.phys.dx
+    sfx(0)
+   end
+   
+   --top or bottom
+   if self.bounds.y <= 3 or self.bounds.y >= 120 then
+    self.phys.dy =- self.phys.dy
+    sfx(0)
+   end
+  end
+ }
 end
 
-function chaos_sheep()
- sheepdx=rnd(4)-2
- sheepdy=rnd(2)-1
-end
-
-function move_sheep()
- sheepx+=sheepdx
- sheepy+=sheepdy
- 
- bounce_sheep()
-end
-
-function anim_sheep()
- sheep+=1
- 
-	if sheep>sheep_r_e then
-	 sheep=sheep_r_s
- end
-end
-
-function bounce_sheep()
- -- left or right
- if sheepx<=3 or
-    sheepx+8>=125 then
- 	sheepdx=-sheepdx
- 	sfx(0)
- end
- 
- --top or bottom
- if sheepy<=3 or
-    sheepy+8>=120 then
-  sheepdy=-sheepdy
-  sfx(0)
- end
-end
 -->8
--- shepherd
+-- shepheard
 
 sheph_i_s=16
 speph_i_e=20
