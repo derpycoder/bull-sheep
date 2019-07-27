@@ -84,7 +84,7 @@ function make_sheep(x, y)
    self:bounce()
    
    if btnp(❎) then
-    chaos_sheep()
+    self:chaos()
    end
   end,
   draw = function(self)
@@ -113,6 +113,10 @@ function make_sheep(x, y)
     self.phys.dy =- self.phys.dy
     sfx(0)
    end
+  end,
+  chaos = function(self)
+   self.phys.dx = rnd(4) - 2
+   self.phys.dy = rnd(2) - 1
   end
  }
 end
