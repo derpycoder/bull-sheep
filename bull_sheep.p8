@@ -4,7 +4,7 @@ __lua__
 -- main
 
 function _init()
- debug = false
+ debug = true
 
  anim = {
   last_updated = 0,
@@ -52,6 +52,9 @@ function _draw()
   sheep:draw()
  end
 
+ if debug then
+  shepheard:debug()
+ end
 end
 
 -->8
@@ -129,9 +132,21 @@ function make_shepheard()
   transform = {
    x = 64,
    y = 10,
-   r = 4,
-   w = 4,
-   h = 4
+  },
+  collider = {
+   circ = {
+    c = 10,
+    r = 10,
+    dx = 3,
+    dy = 3.5
+   },
+   rect = {
+    c = 12,
+    w = 6,
+    h = 7,
+    dx = 1,
+    dy = 0
+   }
   },
   phys = {
    dx = 1,
@@ -231,6 +246,16 @@ function make_shepheard()
    end
   end,
   debug = function(self)
+   rect(self.transform.x + self.collider.rect.dx,
+        self.transform.y + self.collider.rect.dy,
+        self.transform.x + self.collider.rect.w,
+        self.transform.y + self.collider.rect.h,
+        self.collider.rect.c)
+
+   circ(self.transform.x + self.collider.circ.dx,
+        self.transform.y + self.collider.circ.dy,
+        self.collider.circ.r,
+        self.collider.circ.c)
   end
  }
 end
