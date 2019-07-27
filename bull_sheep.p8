@@ -2,8 +2,6 @@ pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
 -- main
-local anim
-local sheeps
 
 function _init()
  anim = {
@@ -16,12 +14,12 @@ function _init()
   make_sheep(30, 20),
   make_sheep(80, 60),
  }
- 
- init_sheph()
+
+ shepheard = make_shepheard()
 end
 
 function _update()
- move_sheph()
+ shepheard:update()
 
  for sheep in all(sheeps) do
   sheep:update()
@@ -32,7 +30,7 @@ function _update()
  if curr_time - anim.last_updated > anim.sample_rate then
   anim.last_updated = curr_time
 
-  anim_sheph()
+  shepheard:animate()
   
   for sheep in all(sheeps) do
    sheep:animate()
@@ -46,7 +44,7 @@ function _draw()
  
  print('press ❎ for chaos',5,115,7)
 
- spr(sheph,shephx,shephy)
+ shepheard:draw()
  
  for sheep in all(sheeps) do
   sheep:draw()
@@ -59,7 +57,7 @@ end
 
 function make_sheep(x, y)
  return {
-  bounds = {
+  transform = {
    x = x,
    y = y,
    r = 4,
@@ -78,8 +76,8 @@ function make_sheep(x, y)
    }
   },
   update = function(self)
-   self.bounds.x += self.phys.dx
-   self.bounds.y += self.phys.dy
+   self.transform.x += self.phys.dx
+   self.transform.y += self.phys.dy
    
    self:bounce()
    
@@ -89,7 +87,7 @@ function make_sheep(x, y)
   end,
   draw = function(self)
    spr(self.sprites.curr,
-       self.bounds.x, self.bounds.y, 1, 1,
+       self.transform.x, self.transform.y, 1, 1,
        self.phys.dx > 0)
   end,
   animate = function(self)
@@ -103,13 +101,13 @@ function make_sheep(x, y)
   end,
   bounce = function(self)
    -- left or right
-   if self.bounds.x <= 3 or self.bounds.x >= 125 then
+   if self.transform.x <= 3 or self.transform.x >= 125 then
     self.phys.dx =- self.phys.dx
     sfx(0)
    end
    
    --top or bottom
-   if self.bounds.y <= 3 or self.bounds.y >= 120 then
+   if self.transform.y <= 3 or self.transform.y >= 120 then
     self.phys.dy =- self.phys.dy
     sfx(0)
    end
@@ -124,99 +122,108 @@ end
 -->8
 -- shepheard
 
-sheph_i_s=16
-speph_i_e=20
+function make_shepheard()
+ return {
+  transform = {
+   x = 64,
+   y = 10,
+   r = 4,
+   w = 4,
+   h = 4
+  },
+  phys = {
+   dx = 1,
+   dy = 1
+  },
+  sprites = {
+   curr = 16,
+   idle = {
+    start = 16,
+    stop = 20
+   },
+   walk = {
+    start = 32,
+    stop = 38
+   }
+  },
+  update = function(self)
+   self.transform.x += self.phys.dx
+   self.transform.y += self.phys.dy
 
-sheph_w_s=32
-sheph_w_e=38
+   if btn(⬆️) then
+    self.phys.dy=-1
+   end
+   if btn(⬇️) then
+    self.phys.dy=1
+   end
+   
+   if btn(⬅️) then
+    self.phys.dx=-1
+   end
+   if btn(➡️) then
+    self.phys.dx=1
+   end
 
-function init_sheph()
- sheph=sheph_i_s
- 
- shephx=64
- shephy=10
- 
- shephdx=1
- shephdy=1
- 
- sheph_state=❎
-end
+   if not btn(⬆️) and
+      not btn(⬇️) and
+      not btn(⬅️) and
+      not btn(➡️) then
+    self.state = ❎
+   end
+   
+   if not btn(⬆️) and
+      not btn(⬇️) then
+    self.phys.dy = 0
+   end
+   if not btn(⬅️) and
+      not btn(➡️) then
+    self.phys.dx = 0
+   end
+   
+   if self.state==❎ then
+    if btnp(⬆️) or btnp(⬇️) or
+       btnp(➡️) or btnp(⬅️) then
+     self.sprites.curr = self.sprites.walk.start
+     self.state = 'w'
+    end
+   end
 
-function move_sheph()
- shephy+=shephdy
- shephx+=shephdx
-  
- if btn(⬆️) then
-  shephdy=-1
- end
- if btn(⬇️) then
-  shephdy=1
- end
- 
- if btn(⬅️) then
- 	shephdx=-1
- end
- if btn(➡️) then
- 	shephdx=1
- end
- 
- if not btn(⬆️) and
-    not btn(⬇️) and
-    not btn(⬅️) and
-    not btn(➡️) then
-  sheph_state=❎
- end
- 
- if not btn(⬆️) and
-    not btn(⬇️) then
-  shephdy=0
- end
- if not btn(⬅️) and
-    not btn(➡️) then
-  shephdx=0
- end
- 
- if sheph_state==❎ then
-  if btnp(⬆️) or btnp(⬇️) or
-     btnp(➡️) or btnp(⬅️) then
-   sheph=sheph_w_s
-   sheph_state='w'
+   if self.transform.x >= 120 then
+    self.transform.x = 119
+   end
+   
+   if self.transform.x <= 0 then
+    self.transform.x = 1
+   end
+   
+   if self.transform.y >= 115 then
+    self.transform.y = 114
+   end
+   
+   if self.transform.y <= 0 then
+    self.transform.y = 1
+   end
+  end,
+  draw = function(self)
+   spr(self.sprites.curr,
+       self.transform.x, self.transform.y)
+  end,
+  animate = function(self)
+   self.sprites.curr += 1
+
+   if self.state=='w' then  
+    if self.sprites.curr > self.sprites.walk.stop then
+     self.sprites.curr = self.sprites.walk.start
+    end
+   else  
+    if self.sprites.curr > self.sprites.idle.stop then
+     self.sprites.curr = self.sprites.idle.start
+    end
+   end
+  end,
+  debug = function(self)
   end
- end
- 
- bind_sheph()
-end
-
-function bind_sheph()
- if shephx>=120 then
-  shephx=119
- end
- 
- if shephx<=0 then
-  shephx=1
- end
- 
- if shephy>=115 then
-  shephy=114
- end
- 
- if shephy<=0 then
-  shephy=1
- end
-end
-
-function anim_sheph()
- sheph+=1
-
- if sheph_state=='w' then  
-  if sheph>sheph_w_e then
-   sheph=sheph_w_s
-  end
- else  
-  if sheph>speph_i_e then
- 	 sheph=sheph_i_s
-  end
- end
+ }
 end
 
 __gfx__
