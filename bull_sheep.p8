@@ -4,7 +4,7 @@ __lua__
 -- main
 
 function _init()
- debug = true
+ debug = false
 
  anim = {
   last_updated = 0,
@@ -21,6 +21,10 @@ function _init()
 end
 
 function _update()
+	if btnp(4) then
+	 debug = not debug
+	end
+
  shepheard:update()
 
  for sheep in all(sheeps) do
@@ -50,6 +54,10 @@ function _draw()
  
  for sheep in all(sheeps) do
   sheep:draw()
+
+  if debug then
+   sheep:debug()
+  end
  end
 
  if debug then
@@ -64,10 +72,22 @@ function make_sheep(x, y)
  return {
   transform = {
    x = x,
-   y = y,
-   r = 4,
-   w = 4,
-   h = 4
+   y = y
+  },
+  collider = {
+   circ = {
+    c = 10,
+    r = 7,
+    dx = 4,
+    dy = 4
+   },
+   rect = {
+    c = 12,
+    w = 8,
+    h = 8,
+    dx = 0,
+    dy = 0
+   }
   },
   phys = {
    dx = rnd(4) - 2,
@@ -103,6 +123,16 @@ function make_sheep(x, y)
    end
   end,
   debug = function(self)
+   rect(self.transform.x + self.collider.rect.dx,
+        self.transform.y + self.collider.rect.dy,
+        self.transform.x + self.collider.rect.w,
+        self.transform.y + self.collider.rect.h,
+        self.collider.rect.c)
+
+   circ(self.transform.x + self.collider.circ.dx,
+        self.transform.y + self.collider.circ.dy,
+        self.collider.circ.r,
+        self.collider.circ.c)
   end,
   bounce = function(self)
    -- left or right
