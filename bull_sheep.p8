@@ -123,16 +123,7 @@ function make_sheep(x, y)
    end
   end,
   debug = function(self)
-   rect(self.transform.x + self.collider.rect.dx,
-        self.transform.y + self.collider.rect.dy,
-        self.transform.x + self.collider.rect.w,
-        self.transform.y + self.collider.rect.h,
-        self.collider.rect.c)
-
-   circ(self.transform.x + self.collider.circ.dx,
-        self.transform.y + self.collider.circ.dy,
-        self.collider.circ.r,
-        self.collider.circ.c)
+   debugger(self.transform, self.collider)
   end,
   bounce = function(self)
    -- left or right
@@ -276,18 +267,25 @@ function make_shepheard()
    end
   end,
   debug = function(self)
-   rect(self.transform.x + self.collider.rect.dx,
-        self.transform.y + self.collider.rect.dy,
-        self.transform.x + self.collider.rect.w,
-        self.transform.y + self.collider.rect.h,
-        self.collider.rect.c)
-
-   circ(self.transform.x + self.collider.circ.dx,
-        self.transform.y + self.collider.circ.dy,
-        self.collider.circ.r,
-        self.collider.circ.c)
+   debugger(self.transform, self.collider)
   end
  }
+end
+
+-->8
+-- helpers
+
+function debugger(transform, collider)
+ rect(transform.x + collider.rect.dx,
+      transform.y + collider.rect.dy,
+      transform.x + collider.rect.w,
+      transform.y + collider.rect.h,
+      collider.rect.c)
+
+ circ(transform.x + collider.circ.dx,
+      transform.y + collider.circ.dy,
+      collider.circ.r,
+      collider.circ.c)
 end
 
 __gfx__
