@@ -72,22 +72,22 @@ function make_sheep(x, y)
  return {
   transform = {
    x = x,
-   y = y
-  },
-  collider = {
-   circ = {
-    c = 10,
-    r = 7,
-    dx = 4,
-    dy = 4
+   y = y,
+   collider = {
+    circ = {
+     c = 10,
+     r = 7,
+     dx = 4,
+     dy = 4
+    },
+    rect = {
+     c = 12,
+     w = 8,
+     h = 8,
+     dx = 0,
+     dy = 0
+    }
    },
-   rect = {
-    c = 12,
-    w = 8,
-    h = 8,
-    dx = 0,
-    dy = 0
-   }
   },
   phys = {
    dx = rnd(4) - 2,
@@ -123,7 +123,7 @@ function make_sheep(x, y)
    end
   end,
   debug = function(self)
-   debugger(self.transform, self.collider)
+   debugger(self.transform)
   end,
   bounce = function(self)
    -- left or right
@@ -153,21 +153,21 @@ function make_shepheard()
   transform = {
    x = 64,
    y = 10,
-  },
-  collider = {
-   circ = {
-    c = 10,
-    r = 10,
-    dx = 3,
-    dy = 3.5
+   collider = {
+    circ = {
+     c = 10,
+     r = 10,
+     dx = 3,
+     dy = 3.5
+    },
+    rect = {
+     c = 12,
+     w = 6,
+     h = 7,
+     dx = 1,
+     dy = 0
+    }
    },
-   rect = {
-    c = 12,
-    w = 6,
-    h = 7,
-    dx = 1,
-    dy = 0
-   }
   },
   phys = {
    dx = 1,
@@ -267,7 +267,7 @@ function make_shepheard()
    end
   end,
   debug = function(self)
-   debugger(self.transform, self.collider)
+   debugger(self.transform)
   end
  }
 end
@@ -275,18 +275,26 @@ end
 -->8
 -- helpers
 
-function debugger(transform, collider)
- rect(transform.x + collider.rect.dx,
-      transform.y + collider.rect.dy,
-      transform.x + collider.rect.w,
-      transform.y + collider.rect.h,
-      collider.rect.c)
+function debugger(transform)
+ local rectangle = transform.collider.rect
+ local circle = transform.collider.circ
 
- circ(transform.x + collider.circ.dx,
-      transform.y + collider.circ.dy,
-      collider.circ.r,
-      collider.circ.c)
+ rect(transform.x + rectangle.dx,
+      transform.y + rectangle.dy,
+      transform.x + rectangle.w,
+      transform.y + rectangle.h,
+      rectangle.c)
+
+ circ(transform.x + circle.dx,
+      transform.y + circle.dy,
+      circle.r,
+      circle.c)
 end
+
+function circ_overlap(transformA, transformB)
+ 
+end
+
 
 __gfx__
 00000000000000000077000000777700007777000000770000000000000000000000000000000000000000000000000000000000000000000000000000000000
