@@ -29,6 +29,8 @@ function _update()
 
  for sheep in all(sheeps) do
   sheep:update()
+
+  shepheard:detect_hit(sheep)
  end
 
  local curr_time = time()
@@ -48,7 +50,7 @@ function _draw()
  cls()
  map(0,0)
  
- print('press ❎ for chaos',5,115,7)
+ print('press ❎ to intimidate sheeps', 5, 115, 7)
 
  shepheard:draw()
  
@@ -107,7 +109,7 @@ function make_sheep(x, y)
    self:bounce()
    
    if btnp(❎) then
-    self:chaos()
+    self:intimidate()
    end
   end,
   draw = function(self)
@@ -138,8 +140,8 @@ function make_sheep(x, y)
     sfx(0)
    end
   end,
-  chaos = function(self)
-   self.phys.dx = rnd(4) - 2
+  intimidate = function(self)
+   self.phys.dx = rnd(2) - 1
    self.phys.dy = rnd(2) - 1
   end
  }
@@ -268,6 +270,11 @@ function make_shepheard()
   end,
   debug = function(self)
    debugger(self.transform)
+  end,
+  detect_hit = function(self, sheep)
+   if circ_overlap(self.transform, sheep.transform) then
+    sheep:intimidate()
+   end
   end
  }
 end
@@ -292,7 +299,10 @@ function debugger(transform)
 end
 
 function circ_overlap(transformA, transformB)
- 
+ local dx = transformB.x - transformA.x
+ local dy = transformB.y - transformA.y
+ local r = transformA.collider.circ.r + transformB.collider.circ.r
+ return dx * dx + dy * dy < r * r
 end
 
 
