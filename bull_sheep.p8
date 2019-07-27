@@ -4,6 +4,8 @@ __lua__
 -- main
 
 function _init()
+ debug = false
+
  anim = {
   last_updated = 0,
   sample_rate = 0.05
@@ -150,27 +152,32 @@ function make_shepheard()
    self.transform.x += self.phys.dx
    self.transform.y += self.phys.dy
 
-   if btn(⬆️) then
-    self.phys.dy=-1
-   end
-   if btn(⬇️) then
-    self.phys.dy=1
-   end
-   
+   -- standalone ifs
+   -- to allow free movements in all directions
    if btn(⬅️) then
     self.phys.dx=-1
    end
    if btn(➡️) then
     self.phys.dx=1
    end
+   if btn(⬆️) then
+    self.phys.dy=-1
+   end
+   if btn(⬇️) then
+    self.phys.dy=1
+   end
 
+   -- detect when none of the movement buttons are being
+   -- pressed
    if not btn(⬆️) and
       not btn(⬇️) and
       not btn(⬅️) and
       not btn(➡️) then
     self.state = ❎
    end
-   
+
+   -- prevent character drift,
+   -- by making making deltas 0
    if not btn(⬆️) and
       not btn(⬇️) then
     self.phys.dy = 0
@@ -180,6 +187,7 @@ function make_shepheard()
     self.phys.dx = 0
    end
    
+   -- walk animation cue
    if self.state==❎ then
     if btnp(⬆️) or btnp(⬇️) or
        btnp(➡️) or btnp(⬅️) then
@@ -188,6 +196,7 @@ function make_shepheard()
     end
    end
 
+   -- rudimentary collision detection
    if self.transform.x >= 120 then
     self.transform.x = 119
    end
