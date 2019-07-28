@@ -17,6 +17,9 @@ function _init()
  make_sheep(60, 40)
  make_sheep(30, 20)
  make_sheep(80, 60)
+ make_sheep(70, 20)
+ make_sheep(30, 90)
+ make_sheep(90, 40)
 end
 
 function _update()
@@ -78,7 +81,7 @@ function make_sheep(x, y)
        self.x, self.y, 1, 1,
        self.velocity[1] > 0)
 
-   self:debug()
+   -- self:debug()
   end,
   animate = function(self)
    self.sprite += 1
@@ -198,7 +201,7 @@ function make_shepherd(x, y)
   draw = function(self)
    spr(self.sprite, self.x, self.y)
 
-   self:debug()
+   -- self:debug()
   end,
   animate = function(self)
    self.sprite += 1
