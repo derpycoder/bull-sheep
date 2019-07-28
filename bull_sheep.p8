@@ -221,7 +221,23 @@ function make_game_object(x, y, props)
    end
   end,
   update = function() end,
-  animate = function() end
+  animate = function() end,
+  overlap = function(self, target)
+   local left1 = self.x
+   local top1 = self.y
+   local right1 = self.x + self.width
+   local bottom1 = self.y + self.height
+
+   local left2 = target.x
+   local top2 = target.y
+   local right2 = target.x + target.width
+   local bottom2 = target.y + target.height
+
+   return right1 > left2 and right2 > left1 and
+          bottom1 > top2 and bottom2 > top1
+  end,
+  collision = function(self, target)
+  end
  }
 
  local key, val
