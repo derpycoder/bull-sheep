@@ -1,48 +1,37 @@
 pico-8 cartridge // http://www.pico-8.com
 version 18
 __lua__
--- main
+
+local last_updated
+local sample_rate
+local game_objects
+local debug
 
 function _init()
+ last_updated = 0
+ sample_rate = 0.05
  debug = false
 
- anim = {
-  last_updated = 0,
-  sample_rate = 0.05
- }
+ game_objects = {}
 
- sheeps = {
-  make_sheep(60, 40),
-  make_sheep(30, 20),
-  make_sheep(80, 60),
- }
+ make_shepheard(64, 10)
 
- shepheard = make_shepheard()
+ -- make_sheep(60, 40)
+ -- make_sheep(30, 20)
+ -- make_sheep(80, 60
 end
 
 function _update()
-	if btnp(4) then
-	 debug = not debug
-	end
+ local game_object
 
- shepheard:update()
-
- for sheep in all(sheeps) do
-  sheep:update()
-
-  shepheard:detect_hit(sheep)
+ for game_object in all(game_objects) do
+  game_object:update()
  end
 
- local curr_time = time()
- 
- if curr_time - anim.last_updated > anim.sample_rate then
-  anim.last_updated = curr_time
+ animate()
 
-  shepheard:animate()
-  
-  for sheep in all(sheeps) do
-   sheep:animate()
-  end
+ if btnp(4) then
+  debug = not debug
  end
 end
 
@@ -52,23 +41,24 @@ function _draw()
  
  print('press ❎ to intimidate sheeps', 5, 115, 7)
 
- shepheard:draw()
- 
- for sheep in all(sheeps) do
-  sheep:draw()
+ local game_object
 
-  if debug then
-   sheep:debug()
-  end
- end
-
- if debug then
-  shepheard:debug()
+ for game_object in all(game_objects) do
+  game_object:draw()
  end
 end
 
--->8
--- sheep
+function animate()
+ local curr_time = time()
+ 
+ if curr_time - last_updated > sample_rate then
+  last_updated = curr_time
+
+  for game_object in all(game_objects) do
+   game_object:animate()
+  end
+ end
+end
 
 function make_sheep(x, y)
  return {
@@ -113,15 +103,15 @@ function make_sheep(x, y)
    end
   end,
   draw = function(self)
-   spr(self.sprites.curr,
+   spr(self.sprite,
        self.transform.x, self.transform.y, 1, 1,
        self.phys.dx > 0)
   end,
   animate = function(self)
-   self.sprites.curr += 1
+   self.sprite += 1
    
-   if self.sprites.curr > self.sprites.idle.stop then
-    self.sprites.curr = self.sprites.idle.start
+   if self.sprite > self.sprites.idle.stop then
+    self.sprite = self.sprites.idle.start
    end
   end,
   debug = function(self)
@@ -131,13 +121,11 @@ function make_sheep(x, y)
    -- left or right
    if self.transform.x <= 3 or self.transform.x >= 125 then
     self.phys.dx =- self.phys.dx
-    sfx(0)
    end
    
    --top or bottom
    if self.transform.y <= 3 or self.transform.y >= 120 then
     self.phys.dy =- self.phys.dy
-    sfx(0)
    end
   end,
   intimidate = function(self)
@@ -147,62 +135,33 @@ function make_sheep(x, y)
  }
 end
 
--->8
--- shepheard
-
-function make_shepheard()
- return {
-  transform = {
-   x = 64,
-   y = 10,
-   collider = {
-    circ = {
-     c = 10,
-     r = 10,
-     dx = 3,
-     dy = 3.5
-    },
-    rect = {
-     c = 12,
-     w = 6,
-     h = 7,
-     dx = 1,
-     dy = 0
-    }
-   },
-  },
-  phys = {
-   dx = 1,
-   dy = 1
-  },
-  sprites = {
-   curr = 16,
-   idle = {
-    start = 16,
-    stop = 20
-   },
-   walk = {
-    start = 32,
-    stop = 38
-   }
-  },
+function make_shepheard(x, y)
+ local shepheard = make_game_object(x, y, {
+  width = 6,
+  height = 7,
+  offset = {1, 0},
+  velocity = {1, 1},
+  sprite = 16,
+  idle = {16, 20},
+  walk = {32, 38},
+  state = "idle",
   update = function(self)
-   self.transform.x += self.phys.dx
-   self.transform.y += self.phys.dy
+   self.x += self.velocity[1]
+   self.y += self.velocity[2]
 
    -- standalone ifs
    -- to allow free movements in all directions
    if btn(⬅️) then
-    self.phys.dx=-1
+    self.velocity[1]= -1
    end
    if btn(➡️) then
-    self.phys.dx=1
+    self.velocity[1] = 1
    end
    if btn(⬆️) then
-    self.phys.dy=-1
+    self.velocity[2] = -1
    end
    if btn(⬇️) then
-    self.phys.dy=1
+    self.velocity[2] = 1
    end
 
    -- detect when none of the movement buttons are being
@@ -211,100 +170,95 @@ function make_shepheard()
       not btn(⬇️) and
       not btn(⬅️) and
       not btn(➡️) then
-    self.state = ❎
+    self.state = "idle"
    end
 
    -- prevent character drift,
    -- by making making deltas 0
    if not btn(⬆️) and
       not btn(⬇️) then
-    self.phys.dy = 0
+    self.velocity[2] = 0
    end
    if not btn(⬅️) and
       not btn(➡️) then
-    self.phys.dx = 0
+    self.velocity[1] = 0
    end
    
    -- walk animation cue
-   if self.state==❎ then
+   if self.state=="idle" then
     if btnp(⬆️) or btnp(⬇️) or
        btnp(➡️) or btnp(⬅️) then
-     self.sprites.curr = self.sprites.walk.start
-     self.state = 'w'
+     self.sprite = self.walk[1]
+     self.state = "walk"
     end
    end
 
    -- rudimentary collision detection
-   if self.transform.x >= 120 then
-    self.transform.x = 119
+   if self.x >= 120 then
+    self.x = 119
    end
    
-   if self.transform.x <= 0 then
-    self.transform.x = 1
+   if self.x <= 0 then
+    self.x = 1
    end
    
-   if self.transform.y >= 115 then
-    self.transform.y = 114
+   if self.y >= 115 then
+    self.y = 114
    end
    
-   if self.transform.y <= 0 then
-    self.transform.y = 1
+   if self.y <= 0 then
+    self.y = 1
    end
   end,
   draw = function(self)
-   spr(self.sprites.curr,
-       self.transform.x, self.transform.y)
+   spr(self.sprite, self.x, self.y)
+
+   if debug then
+    self:debug(12)
+   end
   end,
   animate = function(self)
-   self.sprites.curr += 1
+   self.sprite += 1
 
-   if self.state=='w' then  
-    if self.sprites.curr > self.sprites.walk.stop then
-     self.sprites.curr = self.sprites.walk.start
+   if self.state == 'walk' then  
+    if self.sprite > self.walk[2] then
+     self.sprite = self.walk[1]
     end
    else  
-    if self.sprites.curr > self.sprites.idle.stop then
-     self.sprites.curr = self.sprites.idle.start
+    if self.sprite > self.idle[2] then
+     self.sprite = self.idle[1]
     end
    end
-  end,
-  debug = function(self)
-   debugger(self.transform)
-  end,
-  detect_hit = function(self, sheep)
-   if circ_overlap(self.transform, sheep.transform) then
-    sheep:intimidate()
-   end
   end
+ })
+
+ add(game_objects, shepheard)
+end
+
+function make_game_object(x, y, props) 
+ local game_obj = {
+  x = x,
+  y = y,
+  draw =function() end,
+  debug = function(self, color)
+   rect(self.x + self.offset[1],
+        self.y + self.offset[2],
+        self.x + self.width,
+        self.y + self.height,
+        color)
+  end,
+  update = function() end,
+  animate = function() end
  }
+
+ local key, val
+
+ for key, val in pairs(props) do
+  game_obj[key] = val
+ end
+
+ return game_obj
 end
-
--->8
--- helpers
-
-function debugger(transform)
- local rectangle = transform.collider.rect
- local circle = transform.collider.circ
-
- rect(transform.x + rectangle.dx,
-      transform.y + rectangle.dy,
-      transform.x + rectangle.w,
-      transform.y + rectangle.h,
-      rectangle.c)
-
- circ(transform.x + circle.dx,
-      transform.y + circle.dy,
-      circle.r,
-      circle.c)
-end
-
-function circ_overlap(transformA, transformB)
- local dx = transformB.x - transformA.x
- local dy = transformB.y - transformA.y
- local r = transformA.collider.circ.r + transformB.collider.circ.r
- return dx * dx + dy * dy < r * r
-end
-
 
 __gfx__
 00000000000000000077000000777700007777000000770000000000000000000000000000000000000000000000000000000000000000000000000000000000
