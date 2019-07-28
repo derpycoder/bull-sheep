@@ -5,20 +5,18 @@ __lua__
 local last_updated
 local sample_rate
 local game_objects
-local debug
 
 function _init()
  last_updated = 0
  sample_rate = 0.05
- debug = false
 
  game_objects = {}
 
  make_shepheard(64, 10)
 
- -- make_sheep(60, 40)
- -- make_sheep(30, 20)
- -- make_sheep(80, 60
+ make_sheep(60, 40)
+ make_sheep(30, 20)
+ make_sheep(80, 60)
 end
 
 function _update()
@@ -29,10 +27,6 @@ function _update()
  end
 
  animate()
-
- if btnp(4) then
-  debug = not debug
- end
 end
 
 function _draw()
@@ -61,40 +55,16 @@ function animate()
 end
 
 function make_sheep(x, y)
- return {
-  transform = {
-   x = x,
-   y = y,
-   collider = {
-    circ = {
-     c = 10,
-     r = 7,
-     dx = 4,
-     dy = 4
-    },
-    rect = {
-     c = 12,
-     w = 8,
-     h = 8,
-     dx = 0,
-     dy = 0
-    }
-   },
-  },
-  phys = {
-   dx = rnd(4) - 2,
-   dy = rnd(2) - 1,
-  },
-  sprites = {
-   curr = 1,
-   idle = {
-    start = 1,
-    stop = 7
-   }
-  },
+ local sheep = make_game_object(x, y, {
+  width = 8,
+  height = 8,
+  offset = {0, 0},
+  velocity = {rnd(4) - 2, rnd(2) - 1},
+  sprite = 1,
+  idle = {1, 7},
   update = function(self)
-   self.transform.x += self.phys.dx
-   self.transform.y += self.phys.dy
+   self.x += self.velocity[1]
+   self.y += self.velocity[2]
    
    self:bounce()
    
@@ -104,35 +74,36 @@ function make_sheep(x, y)
   end,
   draw = function(self)
    spr(self.sprite,
-       self.transform.x, self.transform.y, 1, 1,
-       self.phys.dx > 0)
+       self.x, self.y, 1, 1,
+       self.velocity[1] > 0)
+
+   self:debug(12)
   end,
   animate = function(self)
    self.sprite += 1
    
-   if self.sprite > self.sprites.idle.stop then
-    self.sprite = self.sprites.idle.start
+   if self.sprite > self.idle[2] then
+    self.sprite = self.idle[1]
    end
-  end,
-  debug = function(self)
-   debugger(self.transform)
   end,
   bounce = function(self)
    -- left or right
-   if self.transform.x <= 3 or self.transform.x >= 125 then
-    self.phys.dx =- self.phys.dx
+   if self.x <= 0 or self.x >= 120 then
+    self.velocity[1] = -self.velocity[1]
    end
    
    --top or bottom
-   if self.transform.y <= 3 or self.transform.y >= 120 then
-    self.phys.dy =- self.phys.dy
+   if self.y <= 0 or self.y >= 115 then
+    self.velocity[2] = -self.velocity[2]
    end
   end,
   intimidate = function(self)
-   self.phys.dx = rnd(2) - 1
-   self.phys.dy = rnd(2) - 1
+   self.velocity[1] = rnd(2) - 1
+   self.velocity[2] = rnd(2) - 1
   end
- }
+ })
+ 
+ add(game_objects, sheep)
 end
 
 function make_shepheard(x, y)
@@ -213,9 +184,7 @@ function make_shepheard(x, y)
   draw = function(self)
    spr(self.sprite, self.x, self.y)
 
-   if debug then
-    self:debug(12)
-   end
+   self:debug(12)
   end,
   animate = function(self)
    self.sprite += 1
@@ -240,12 +209,16 @@ function make_game_object(x, y, props)
   x = x,
   y = y,
   draw =function() end,
-  debug = function(self, color)
+  debug = function(self, rect_color, text, text_color)
    rect(self.x + self.offset[1],
         self.y + self.offset[2],
         self.x + self.width,
         self.y + self.height,
-        color)
+        rect_color)
+
+   if text then
+    print(text, self.x + 8, self.y, text_color)
+   end
   end,
   update = function() end,
   animate = function() end
