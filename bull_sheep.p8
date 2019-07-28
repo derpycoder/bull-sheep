@@ -4,13 +4,15 @@ __lua__
 
 local last_updated
 local sample_rate
-local game_objects
+local game_objs
+local debug
 
 function _init()
  last_updated = 0
  sample_rate = 0.05
+ debug = false
 
- game_objects = {}
+ game_objs = {}
 
  make_shepherd(64, 10)
 
@@ -23,13 +25,17 @@ function _init()
 end
 
 function _update()
- local game_object
+ local game_obj
 
- for game_object in all(game_objects) do
-  game_object:update()
+ for game_obj in all(game_objs) do
+  game_obj:update()
  end
 
  animate()
+
+ if btnp(4) then
+  debug = not debug
+ end
 end
 
 function _draw()
@@ -38,10 +44,14 @@ function _draw()
  
  print('press ❎ to intimidate sheeps', 5, 115, 7)
 
- local game_object
+ local game_obj
 
- for game_object in all(game_objects) do
-  game_object:draw()
+ for game_obj in all(game_objs) do
+  game_obj:draw()
+
+  if debug then
+   game_obj:debug()
+  end
  end
 end
 
@@ -51,17 +61,16 @@ function animate()
  if curr_time - last_updated > sample_rate then
   last_updated = curr_time
 
-  for game_object in all(game_objects) do
-   game_object:animate()
+  for game_obj in all(game_objs) do
+   game_obj:animate()
   end
  end
 end
 
 function make_sheep(x, y)
- local sheep = make_game_object("sheep", x, y, {
+ local sheep = make_game_obj("sheep", x, y, {
   width = 8,
   height = 8,
-  offset = {0, 0},
   velocity = {rnd(4) - 2, rnd(2) - 1},
   sprite = 1,
   idle = {1, 7},
@@ -80,8 +89,6 @@ function make_sheep(x, y)
    spr(self.sprite,
        self.x, self.y, 1, 1,
        self.velocity[1] > 0)
-
-   -- self:debug()
   end,
   animate = function(self)
    self.sprite += 1
@@ -108,9 +115,9 @@ function make_sheep(x, y)
   compare_hit_boxes = function(self)
    local target
 
-   for target in all(game_objects) do
+   for target in all(game_objs) do
     if target.name == "sheep" and self != target then
-     if self:overlap(target) then
+     if self:collision(target) then
       target:intimidate()
      end
     end
@@ -118,14 +125,13 @@ function make_sheep(x, y)
   end
  })
  
- add(game_objects, sheep)
+ add(game_objs, sheep)
 end
 
 function make_shepherd(x, y)
- local shepherd = make_game_object("shepherd", x, y, {
-  width = 6,
-  height = 7,
-  offset = {1, 0},
+ local shepherd = make_game_obj("shepherd", x, y, {
+  width = 7,
+  height = 8,
   velocity = {1, 1},
   sprite = 16,
   idle = {16, 20},
@@ -200,8 +206,6 @@ function make_shepherd(x, y)
   end,
   draw = function(self)
    spr(self.sprite, self.x, self.y)
-
-   -- self:debug()
   end,
   animate = function(self)
    self.sprite += 1
@@ -219,18 +223,20 @@ function make_shepherd(x, y)
   compare_hit_boxes = function(self)
    local target
    
-   for target in all(game_objects) do
-    if target.name == "sheep" and self:overlap(target) then
-     target:intimidate()
+   for target in all(game_objs) do
+    if target.name == "sheep" then
+     if self:collision(target) then
+      target:intimidate()
+     end
     end
    end
   end
  })
 
- add(game_objects, shepherd)
+ add(game_objs, shepherd)
 end
 
-function make_game_object(name, x, y, props) 
+function make_game_obj(name, x, y, props) 
  local game_obj = {
   name = name,
   x = x,
@@ -238,31 +244,71 @@ function make_game_object(name, x, y, props)
   label = "",
   draw =function() end,
   debug = function(self)
-   rect(self.x + self.offset[1],
-        self.y + self.offset[2],
-        self.x + self.width,
-        self.y + self.height,
-        12)
+   local x, y, h, w = self.x, self.y, self.height, self.width
+
+   -- Hitbox
+   -- rect(x, y, x + w, y + h, 12)
    
-   print(self.label, self.x + 8, self.y, 10)
+   -- Colliders
+   rectfill(x + 2, y + h / 2, x + w - 2, y + h, 8)
+   rectfill(x + 2, y, x + w - 2, y + h / 2, 12)
+   rectfill(x, y + 2, x + w / 2, y + h - 2, 10)
+   rectfill(x + w / 2, y + 2, x + w, y + h - 2, 7)
+
+   print(self.label, x + 8, y, 10)
   end,
   update = function() end,
   animate = function() end,
   overlap = function(self, target)
-   local left1 = self.x
-   local top1 = self.y
-   local right1 = self.x + self.width
-   local bottom1 = self.y + self.height
-
-   local left2 = target.x
-   local top2 = target.y
-   local right2 = target.x + target.width
-   local bottom2 = target.y + target.height
-
-   return right1 > left2 and right2 > left1 and
-          bottom1 > top2 and bottom2 > top1
+   return bounding_boxes_overlapping(self, target)
   end,
   collision = function(self, target)
+   local x, y, h, w = self.x, self.y, self.height, self.width
+
+   local top_hitbox = {
+    x = x + 2,
+    y = y,
+    width = w - 4,
+    height = h / 2
+   }
+   local bottom_hitbox = {
+    x = x + 2,
+    y = y + h / 2,
+    width = w - 4,
+    height = h / 2
+   }
+   local left_hitbox = {
+    x = x,
+    y = y + 2,
+    width = w / 2,
+    height = h - 4
+   }
+   local right_hitbox = {
+    x = x + w / 2,
+    y = y + 2,
+    width = w / 2,
+    height = h - 4
+   }
+
+   if bounding_boxes_overlapping(bottom_hitbox, target) then
+    self.y = target.y - h
+    return true
+   end
+
+   if bounding_boxes_overlapping(top_hitbox, target) then
+    self.y = target.y + h
+    return true
+   end
+
+   if bounding_boxes_overlapping(left_hitbox, target) then
+    self.x = target.x + w
+    return true
+   end
+
+   if bounding_boxes_overlapping(right_hitbox, target) then
+    self.x = target.x - w
+    return true
+   end
   end
  }
 
@@ -273,6 +319,21 @@ function make_game_object(name, x, y, props)
  end
 
  return game_obj
+end
+
+function bounding_boxes_overlapping(rect_a, rect_b)
+ local left1, top1, right1, bottom1 =
+  rect_a.x, rect_a.y,
+  rect_a.x + rect_a.width,
+  rect_a.y + rect_a.height
+
+ local left2, top2, right2, bottom2 = 
+  rect_b.x, rect_b.y,
+  rect_b.x + rect_b.width,
+  rect_b.y + rect_b.height
+
+ return right1 > left2 and right2 > left1 and
+  bottom1 > top2 and bottom2 > top1
 end
 
 __gfx__
