@@ -106,11 +106,9 @@ function make_sheep(x, y)
    local target
 
    for target in all(game_objects) do
-    if target.name == "shepherd" then
+    if target.name == "sheep" and self != target then
      if self:overlap(target) then
-      self.label = "bleh"
-     else
-      self.label = ""
+      target:intimidate()
      end
     end
    end
@@ -219,13 +217,8 @@ function make_shepherd(x, y)
    local target
    
    for target in all(game_objects) do
-    if target.name == "sheep" then
-     if self:overlap(target) then
-      self.label = "buzz"
-      target:intimidate()
-     end
-    else
-     self.label = ""
+    if target.name == "sheep" and self:overlap(target) then
+     target:intimidate()
     end
    end
   end
