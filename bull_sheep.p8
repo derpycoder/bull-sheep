@@ -12,7 +12,7 @@ function _init()
 
  game_objects = {}
 
- make_shepheard(64, 10)
+ make_shepherd(64, 10)
 
  make_sheep(60, 40)
  make_sheep(30, 20)
@@ -55,7 +55,7 @@ function animate()
 end
 
 function make_sheep(x, y)
- local sheep = make_game_object(x, y, {
+ local sheep = make_game_object("sheep", x, y, {
   width = 8,
   height = 8,
   offset = {0, 0},
@@ -67,6 +67,7 @@ function make_sheep(x, y)
    self.y += self.velocity[2]
    
    self:bounce()
+   self:compare_hit_boxes()
    
    if btnp(❎) then
     self:intimidate()
@@ -77,7 +78,7 @@ function make_sheep(x, y)
        self.x, self.y, 1, 1,
        self.velocity[1] > 0)
 
-   self:debug(12)
+   self:debug()
   end,
   animate = function(self)
    self.sprite += 1
@@ -100,14 +101,27 @@ function make_sheep(x, y)
   intimidate = function(self)
    self.velocity[1] = rnd(2) - 1
    self.velocity[2] = rnd(2) - 1
+  end,
+  compare_hit_boxes = function(self)
+   local target
+
+   for target in all(game_objects) do
+    if target.name == "shepherd" then
+     if self:overlap(target) then
+      self.label = "bleh"
+     else
+      self.label = ""
+     end
+    end
+   end
   end
  })
  
  add(game_objects, sheep)
 end
 
-function make_shepheard(x, y)
- local shepheard = make_game_object(x, y, {
+function make_shepherd(x, y)
+ local shepherd = make_game_object("shepherd", x, y, {
   width = 6,
   height = 7,
   offset = {1, 0},
@@ -180,11 +194,13 @@ function make_shepheard(x, y)
    if self.y <= 0 then
     self.y = 1
    end
+
+   self:compare_hit_boxes()
   end,
   draw = function(self)
    spr(self.sprite, self.x, self.y)
 
-   self:debug(12)
+   self:debug()
   end,
   animate = function(self)
    self.sprite += 1
@@ -198,27 +214,41 @@ function make_shepheard(x, y)
      self.sprite = self.idle[1]
     end
    end
+  end,
+  compare_hit_boxes = function(self)
+   local target
+   
+   for target in all(game_objects) do
+    if target.name == "sheep" then
+     if self:overlap(target) then
+      self.label = "buzz"
+      target:intimidate()
+     end
+    else
+     self.label = ""
+    end
+   end
   end
  })
 
- add(game_objects, shepheard)
+ add(game_objects, shepherd)
 end
 
-function make_game_object(x, y, props) 
+function make_game_object(name, x, y, props) 
  local game_obj = {
+  name = name,
   x = x,
   y = y,
+  label = "",
   draw =function() end,
-  debug = function(self, rect_color, text, text_color)
+  debug = function(self)
    rect(self.x + self.offset[1],
         self.y + self.offset[2],
         self.x + self.width,
         self.y + self.height,
-        rect_color)
-
-   if text then
-    print(text, self.x + 8, self.y, text_color)
-   end
+        12)
+   
+   print(self.label, self.x + 8, self.y, 10)
   end,
   update = function() end,
   animate = function() end,
