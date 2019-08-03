@@ -6,12 +6,12 @@ local last_updated
 local sample_rate
 local game_objs
 local debug
+local game_state = "gameplay"
 
-function _init()
- last_updated = 0
- sample_rate = 0.05
- debug = false
+function init_gameload()
+end
 
+function init_gameplay()
  game_objs = {}
 
  make_shepherd(64, 10)
@@ -27,12 +27,46 @@ function _init()
  make_sheep(100, 90)
 end
 
-function _update60()
+function init_gameover()
+end
+
+local inits = {
+ gameload = init_gameload,
+ gameplay = init_gameplay,
+ gameover = init_gameover
+}
+
+function _init()
+ cls()
+ last_updated = 0
+ sample_rate = 0.05
+ debug = false
+
+ inits[game_state]()
+end
+
+function update_gameload()
+end
+
+function update_gameplay()
  local game_obj
 
  for game_obj in all(game_objs) do
   game_obj:update()
  end
+end
+
+function update_gameover()
+end
+
+local updates = {
+ gameload = update_gameload,
+ gameplay = update_gameplay,
+ gameover = update_gameover
+}
+
+function _update60()
+ updates[game_state]()
 
  animate()
 
@@ -41,8 +75,38 @@ function _update60()
  end
 end
 
-function _draw()
- cls()
+function animate_gamestart()
+end
+
+function animate_gameplay()
+ local curr_time = time()
+ 
+ if curr_time - last_updated > sample_rate then
+  last_updated = curr_time
+
+  for game_obj in all(game_objs) do
+   game_obj:animate()
+  end
+ end
+end
+
+function animate_gameover()
+end
+
+local animators = {
+ gameload = animate_gamestart,
+ gameplay = animate_gameplay,
+ gameover = animate_gameover
+}
+
+function animate()
+ animators[game_state]()
+end
+
+function draw_gamestart()
+end
+
+function draw_gameplay()
  map(0,0)
  
  print('press ❎ to agitate sheeps', 5, 115, 7)
@@ -58,16 +122,19 @@ function _draw()
  end
 end
 
-function animate()
- local curr_time = time()
- 
- if curr_time - last_updated > sample_rate then
-  last_updated = curr_time
+function draw_gameover()
+end
 
-  for game_obj in all(game_objs) do
-   game_obj:animate()
-  end
- end
+local drawer = {
+ gameload = draw_gamestart,
+ gameplay = draw_gameplay,
+ gameover = draw_gameover
+}
+
+function _draw()
+ cls()
+ 
+ drawer[game_state]()
 end
 
 function make_sheep(x, y)
@@ -192,7 +259,6 @@ function make_shepherd(x, y)
    self:compare_hit_boxes()
   end,
   draw = function(self)
-   print(self.sprite, 10, 10)
    spr(self.sprite, self.x, self.y)
   end,
   animate = function(self)
