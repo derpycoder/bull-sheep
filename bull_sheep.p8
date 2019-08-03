@@ -56,6 +56,7 @@ function init_gameplay()
 end
 
 function init_gameover()
+ palt()
 end
 
 local initializers = {
@@ -159,8 +160,8 @@ end
 
 function draw_gameload()
  cls()
- print("bull sheep", 45, 40, 10)
- print("press ❎ to start", 30, 75, 11)
+ print("bull sheep", 45, 55, 10)
+ print("press ❎ to start", 30, 65, 11)
 end
 
 function draw_gameplay()
