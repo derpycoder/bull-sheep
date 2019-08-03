@@ -18,12 +18,8 @@ function init_gameplay()
  make_shepherd(64, 10)
 
  make_sheep(60, 40)
- make_sheep(30, 20)
  make_sheep(80, 60)
- make_sheep(70, 20)
  make_sheep(30, 90)
- make_sheep(90, 40)
- make_sheep(50, 30)
  make_sheep(20, 50)
  make_sheep(100, 90)
 
@@ -39,21 +35,23 @@ local initializers = {
  gameover = init_gameover
 }
 
+function set_game_state(state)
+ game_state = state
+ initializers[game_state]()
+end
+
 function _init()
  cls()
  last_updated = 0
  sample_rate = 0.05
  debug = false
 
- game_state = "gameload"
-
- initializers[game_state]()
+ set_game_state("gameload")
 end
 
 function update_gameload()
  if btnp(❎) then
-  game_state = "gameplay"
-  initializers[game_state]()
+  set_game_state("gameplay")
  end
 end
 
@@ -66,6 +64,9 @@ function update_gameplay()
 end
 
 function update_gameover()
+ if btnp(❎) then
+  set_game_state("gameplay")
+ end
 end
 
 local updators = {
@@ -113,17 +114,19 @@ function animate()
 end
 
 function draw_gameload()
- print("bull sheep", 45, 50, 10)
- print("press ❎ to start", 30, 85, 11)
+ cls()
+ print("bull sheep", 45, 40, 10)
+ print("press ❎ to start", 30, 75, 11)
 end
 
 function draw_gameplay()
+ cls()
  map(0,0)
  
  local life
 
- for life = 1,lives do
-  print("♥", 92 + 8 * life, 5, 3)
+ for life = 1, lives do
+  print("♥", 92 + 8 * life, 6, 3)
  end
 
  local game_obj
@@ -138,6 +141,9 @@ function draw_gameplay()
 end
 
 function draw_gameover()
+ rectfill(0, 50, 128, 75, 0)
+ print("game over", 45, 55, 10)
+ print("press ❎ to restart", 25, 65, 11)
 end
 
 local drawer = {
@@ -146,9 +152,7 @@ local drawer = {
  gameover = draw_gameover
 }
 
-function _draw()
- cls()
- 
+function _draw() 
  drawer[game_state]()
 end
 
@@ -205,6 +209,10 @@ function make_sheep(x, y)
     if target.name == "sheep" and self != target then
      if self:collides(target) then
       target:agitate()
+     end
+    elseif target.name == "shepheard" then
+     if self:collides(target) then
+      self:agitate()
      end
     end
    end
@@ -294,7 +302,15 @@ function make_shepherd(x, y)
    
    for target in all(game_objs) do
     if target.name == "sheep" then
-     self:collides(target)
+     if self:collides(target) then
+      lives -= 1
+
+      if lives < 0 then
+       set_game_state("gameover")
+      end
+
+      target:agitate()
+     end
     end
    end
   end
