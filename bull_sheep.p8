@@ -267,10 +267,10 @@ function make_sheep(x, y)
      if self:collides(target) then
       target:agitate()
      end
-    elseif target.name == "shepheard" then
-     if self:collides(target) then
-      self:agitate()
-     end
+    -- elseif target.name == "shepherd" then
+    --  if self:collides(target) then
+    --   self:agitate()
+    --  end
     end
    end
   end
@@ -393,7 +393,7 @@ function make_shepherd(x, y)
     if target.name == "sheep" then
      if self:collides(target) and not invincible then
       self:take_damage()
-
+      
       if lives <= 0 then
        set_game_state("gameover")
       end
@@ -441,22 +441,22 @@ function make_game_obj(name, x, y, props)
    local right_hitbox = { x = x + w / 2, y = y + 2, width = w / 2, height = h - 4 }
 
    if bounds_overlap(bottom_hitbox, target) then
-    self.y = target.y - h
+    self.y = target.y - h - 1
     return true
    end
 
    if bounds_overlap(top_hitbox, target) then
-    self.y = target.y + h
+    self.y = target.y + h + 1
     return true
    end
 
    if bounds_overlap(left_hitbox, target) then
-    self.x = target.x + w
+    self.x = target.x + w + 1
     return true
    end
 
    if bounds_overlap(right_hitbox, target) then
-    self.x = target.x - w
+    self.x = target.x - w - 1
     return true
    end
   end
