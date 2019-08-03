@@ -7,7 +7,11 @@ local sample_rate
 local game_objs
 local debug
 local game_state
+
 local lives
+local invincible_duration
+local invincible
+local last_invincible
 
 function init_gameload()
 end
@@ -15,15 +19,32 @@ end
 function init_gameplay()
  game_objs = {}
 
+ lives = 3
+ invincible_duration = 1
+ invincible = true
+ last_invincible = 0
+
  make_shepherd(64, 10)
 
  make_sheep(60, 40)
+ make_sheep(30, 20)
  make_sheep(80, 60)
+ make_sheep(70, 20)
  make_sheep(30, 90)
+ make_sheep(90, 40)
+ make_sheep(50, 30)
  make_sheep(20, 50)
  make_sheep(100, 90)
 
- lives = 3
+ local curr_time = time()
+ 
+ if curr_time - last_updated > sample_rate then
+  last_updated = curr_time
+
+  for game_obj in all(game_objs) do
+   game_obj:animate()
+  end
+ end
 end
 
 function init_gameover()
@@ -279,6 +300,12 @@ function make_shepherd(x, y)
    self.x += self.velocity[1]
    self.y += self.velocity[2]
 
+   local curr_time = time()
+ 
+   if curr_time - last_invincible > invincible_duration then
+    invincible = false
+   end
+
    self:compare_hit_boxes()
   end,
   draw = function(self)
@@ -302,8 +329,10 @@ function make_shepherd(x, y)
    
    for target in all(game_objs) do
     if target.name == "sheep" then
-     if self:collides(target) then
+     if self:collides(target) and not invincible then
       lives -= 1
+      invincible = true
+      last_invincible = time()
 
       if lives < 0 then
        set_game_state("gameover")
