@@ -172,10 +172,10 @@ function make_shepherd(x, y)
    end
 
    if not btn_dir.x then
-     self.velocity[1] /= 2
+    self.velocity[1] /= 1.3
    end
    if not btn_dir.y then
-    self.velocity[2] /= 2
+    self.velocity[2] /= 1.3
    end
 
    if self.x <= 2 or 118 <= self.x then
