@@ -15,9 +15,6 @@ function _init()
  game_objs = {}
 
  make_shepherd(64, 10)
- make_shepherd(10, 64)
- make_shepherd(120, 64)
- make_shepherd(64, 120)
 
  make_sheep(60, 40)
  make_sheep(30, 20)
@@ -30,7 +27,7 @@ function _init()
  make_sheep(100, 90)
 end
 
-function _update()
+function _update60()
  local game_obj
 
  for game_obj in all(game_objs) do
@@ -77,7 +74,7 @@ function make_sheep(x, y)
  local sheep = make_game_obj("sheep", x, y, {
   width = 8,
   height = 8,
-  velocity = {rnd(4) - 2, rnd(2) - 1},
+  velocity = {rnd(2) - 1, rnd(1) - 0.5},
   sprite = 1,
   idle = {1, 7},
   update = function(self)
@@ -104,31 +101,20 @@ function make_sheep(x, y)
    end
   end,
   bounce = function(self)
-   -- rudimentary collision detection
-   if self.x >= 118 then
-    self.x = 117
+   if self.x <= 2 or 118 <= self.x then
+    self.x = mid(3, self.x, 117)
     self.velocity[1] = -self.velocity[1]
    end
-   
-   if self.x <= 2 then
-    self.x = 3
-    self.velocity[1] = -self.velocity[1]
-   end
-   
-   if self.y >= 115 then
-    self.y = 114
-    self.velocity[2] = -self.velocity[2]
-   end
-   
-   if self.y <= 2 then
-    self.y = 3
+
+   if self.y <= 2 or 115 <= self.y then
+    self.y = mid(2, self.y, 114)
     self.velocity[2] = -self.velocity[2]
    end
 
   end,
   agitate = function(self)
-   self.velocity[1] = rnd(4) - 2
-   self.velocity[2] = rnd(2) - 1
+   self.velocity[1] = rnd(2) - 1
+   self.velocity[2] = rnd(1) - 0.5
   end,
   compare_hit_boxes = function(self)
    local target
@@ -137,11 +123,6 @@ function make_sheep(x, y)
     if target.name == "sheep" and self != target then
      if self:collides(target) then
       target:agitate()
-     end
-    end
-    if target.name == "shepherd" then
-     if self:collides(target) then
-      self:agitate()
      end
     end
    end
@@ -161,73 +142,57 @@ function make_shepherd(x, y)
   walk = {32, 38},
   state = "idle",
   update = function(self)
-   self.x += self.velocity[1]
-   self.y += self.velocity[2]
+   local btn_dir = {x = false, y = false}
 
-   -- standalone ifs
-   -- to allow free movements in all directions
    if btn(⬅️) then
-    self.velocity[1]= -1
+    self.velocity[1] = -0.5
+    btn_dir.x = true
    end
    if btn(➡️) then
-    self.velocity[1] = 1
+    self.velocity[1] = 0.5
+    btn_dir.x = true
    end
    if btn(⬆️) then
-    self.velocity[2] = -1
+    self.velocity[2] = -0.5
+    btn_dir.y = true
    end
    if btn(⬇️) then
-    self.velocity[2] = 1
+    self.velocity[2] = 0.5
+    btn_dir.y = true
    end
 
-   -- detect when none of the movement buttons are being
-   -- pressed
-   if not btn(⬆️) and
-      not btn(⬇️) and
-      not btn(⬅️) and
-      not btn(➡️) then
+   if btn_dir.x or btn_dir.y then
+    if self.sprite < self.walk[1] or self.walk[2] < self.sprite then
+     self.sprite = self.walk[1]
+    end
+
+    self.state = "walk"
+   else
     self.state = "idle"
    end
 
-   -- prevent character drift,
-   -- by making making deltas 0
-   if not btn(⬆️) and
-      not btn(⬇️) then
-    self.velocity[2] = 0
+   if not btn_dir.x then
+     self.velocity[1] /= 2
    end
-   if not btn(⬅️) and
-      not btn(➡️) then
-    self.velocity[1] = 0
-   end
-   
-   -- walk animation cue
-   if self.state=="idle" then
-    if btnp(⬆️) or btnp(⬇️) or
-       btnp(➡️) or btnp(⬅️) then
-     self.sprite = self.walk[1]
-     self.state = "walk"
-    end
+   if not btn_dir.y then
+    self.velocity[2] /= 2
    end
 
-   -- rudimentary collision detection
-   if self.x >= 118 then
-    self.x = 117
-   end
+   if self.x <= 2 or 118 <= self.x then
+    self.x = mid(3, self.x, 117)
+   end   
    
-   if self.x <= 2 then
-    self.x = 3
-   end
-   
-   if self.y >= 115 then
-    self.y = 114
-   end
-   
-   if self.y <= 2 then
-    self.y = 3
+   if self.y <= 2 or 115 <= self.y then
+    self.y = mid(3, self.y, 114)
    end
 
-   -- self:compare_hit_boxes()
+   self.x += self.velocity[1]
+   self.y += self.velocity[2]
+
+   self:compare_hit_boxes()
   end,
   draw = function(self)
+   print(self.sprite, 10, 10)
    spr(self.sprite, self.x, self.y)
   end,
   animate = function(self)
@@ -248,9 +213,7 @@ function make_shepherd(x, y)
    
    for target in all(game_objs) do
     if target.name == "sheep" then
-     if self:overlaps(target) then
-      target:agitate()
-     end
+     self:collides(target)
     end
    end
   end
