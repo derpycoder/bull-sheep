@@ -13,14 +13,22 @@ local invincible_duration
 local invincible
 local last_invincible
 
+local score
+local last_survived
+local survival_duration
+
 function init_gameload()
 end
 
 function init_gameplay()
  game_objs = {}
 
+ score = 0
+ last_survived = time()
+ survival_duration = 1
+
  lives = 3
- invincible_duration = 1
+ invincible_duration = 0.5
  invincible = true
  last_invincible = time()
 
@@ -77,14 +85,26 @@ function update_gameload()
 end
 
 function update_gameplay()
+ if btnp(4) then
+  debug = not debug
+ end
+
  local game_obj
 
  for game_obj in all(game_objs) do
   game_obj:update()
  end
 
- if btnp(4) then
-  debug = not debug
+ if game_state == "gameover" then
+  return
+ end
+
+ local curr_time = time()
+
+ if curr_time - last_survived > survival_duration then
+  last_survived = curr_time
+
+  score += 1
  end
 end
 
@@ -146,6 +166,8 @@ end
 function draw_gameplay()
  cls()
  map(0,0)
+
+ print("score: "..score, 6, 6, 1)
  
  local life
 
