@@ -1,5 +1,5 @@
 # Bull Sheep
-A Game About Sheeps
+🐑 Making a Fantasy Game On, Fantasy Console, PICO-8
 
 [![Custom Badge](https://img.shields.io/badge/Author-Abhijit%20Kar-brightgreen.svg)](https://www.abhijit-kar.com/)
 [![MIT licensed](https://img.shields.io/badge/Licence-MIT-blue.svg?style=flat)](https://opensource.org/licenses/mit-license.php)
